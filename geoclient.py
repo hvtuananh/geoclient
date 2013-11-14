@@ -14,6 +14,11 @@ class GeoClient:
         self.base_url = 'https://api.cityofnewyork.us/geoclient/v1/'
         self.format = format
         self.boroughs = {
+            '1':'manhattan',
+            '2':'bronx',
+            '3':'brooklyn',
+            '4':'queens',
+            '5':'staten island',
             '100':'manhattan',
             '104':'bronx',
             '112':'brooklyn',
