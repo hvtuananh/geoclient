@@ -1,4 +1,7 @@
 from configuration import *
+import re
+
+addr_p = re.compile(r'([\d\-]+)([^,]+)(.+)', re.I)
 
 class GeoClient:
     def __init__(self, format = 'json'):
@@ -31,3 +34,23 @@ class GeoClient:
         #1. House number: The first numerical value (including hyphen)
         #2. Street name: The rest
         #3. Borough: Hard to infer. Manhattan + Brooklyn is easy but Queens is harder
+        matches = addr_p.search(address)
+        
+        # If address is mal-formed
+        if not matches:
+            return None
+            
+        # The funny thing
+        house_number = str(matches.group(1).replace('-', ''))
+        street = str(matches.group(2)).strip()
+        borough = self.__infer_borough(matches.group(3))
+        
+        params = {
+            'houseNumber': house_number,
+            'street': street 
+            
+        }
+        return params     
+        
+geo = GeoClient()
+print geo.standardize('xxx 74-07 6666 62nd St, Brooklyn, NY')
