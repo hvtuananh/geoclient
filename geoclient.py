@@ -1,5 +1,8 @@
 from configuration import *
 import re
+import json
+import urllib, urllib2
+import traceback
 
 addr_p = re.compile(r'([\d\-]+)([^,]+)(.+)', re.I)
 borough_p = re.compile(r'brooklyn|manhattan|')
@@ -29,13 +32,30 @@ class GeoClient:
             '110':'queens',
             '103':'staten island'
         }
+        self.max_retry = 10
         
     def __query(self, params):
         # Merge with app_id and app_key
         params = dict(params.items() + self.builtins.items())
         
         # Form a query
+        url = self.base_url + 'address.' + self.format + '?' + urllib.urlencode(params)
         
+        # Make query
+        retry = 0
+        data = None
+        while retry < self.max_retry:
+            try:
+                # Only support JSON at this moment
+                data = json.load(urllib2.urlopen(url))
+            except:
+                traceback.print_exc()
+                retry += 1
+            break
+        if data is None or data['address'] is None or data['address']['geosupportReturnCode'][0:1] is not '0' or int(data['address']['geosupportReturnCode']) > 1:
+            return None
+        return data['address']
+                
     def __infer_borough(self, string):
         '''
         There are 2 ways of inferring borough from address string:
@@ -80,7 +100,10 @@ class GeoClient:
             'street': street,
             'borough':borough
         }
-        return params     
         
-geo = GeoClient()
-print geo.standardize('xxx 74-07 6666 62nd St, Brooklyn, NY, 113093308')
+        results = self.__query(params)
+        return results
+
+if __name__ == '__main__':        
+    geo = GeoClient()
+    print geo.standardize('1085 E 12 ST, , BROOKLYN, NY, 11330')
