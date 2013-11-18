@@ -51,9 +51,17 @@ class GeoClient:
             except:
                 traceback.print_exc()
                 retry += 1
-            break
-        if data is None or data['address'] is None or data['address']['geosupportReturnCode'][0:1] is not '0' or int(data['address']['geosupportReturnCode']) > 1:
+            
+            if data:
+                break
+        
+        if data is None or 'address' not in data:
             return None
+        if 'geosupportReturnCode' not in data['address']:
+            return None
+        if data['address']['geosupportReturnCode'][0:1] != '0' or int(data['address']['geosupportReturnCode']) > 1:
+            return None
+        
         return data['address']
                 
     def __infer_borough(self, string):
@@ -73,7 +81,10 @@ class GeoClient:
         zip = matches.group(0)
         if zip[0:1] is not '1':
             return None
-        return self.boroughs[zip[0:3]]
+        if zip[0:3] in self.boroughs:
+            return self.boroughs[zip[0:3]]
+            
+        return None
         
     def standardize(self, address):
         '''
@@ -95,6 +106,9 @@ class GeoClient:
         street = str(matches.group(2)).strip()
         borough = self.__infer_borough(matches.group(3))
         
+        if borough is None:
+            return None
+        
         params = {
             'houseNumber': house_number,
             'street': street,
@@ -106,4 +120,4 @@ class GeoClient:
 
 if __name__ == '__main__':        
     geo = GeoClient()
-    print geo.standardize('1085 E 12 ST, , BROOKLYN, NY, 11330')
+    print geo.standardize('7407 62nd st, brooklyn, ny 11385')
