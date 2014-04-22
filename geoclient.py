@@ -1,8 +1,14 @@
+#
+# python wrapper for NYC geoclient v1 api
+# tuananh at nyu.edu
+# 0.2: use requests library instead of urllib
+#
+
 from configuration import *
 import re
-import json
-import urllib, urllib2
 import traceback
+import requests
+import time
 
 addr_p = re.compile(r'([\d\-]+)([^,]+)(.+)', re.I)
 borough_p = re.compile(r'brooklyn|manhattan|')
@@ -33,27 +39,28 @@ class GeoClient:
             '103':'staten island'
         }
         self.max_retry = 10
-        
-    def __query(self, params):
+    
+    def __query(self, type = 'address', params = {}):
         # Merge with app_id and app_key
         params = dict(params.items() + self.builtins.items())
         
-        # Form a query
-        url = self.base_url + 'address.' + self.format + '?' + urllib.urlencode(params)
-        
-        # Make query
         retry = 0
         data = None
         while retry < self.max_retry:
             try:
-                # Only support JSON at this moment
-                data = json.load(urllib2.urlopen(url))
+                r = requests.get(self.base_url + type + '.' + self.format, params=params)
+                if r.status_code == 200:
+                    data = r.json()
+                else:
+                    print r.text
             except:
                 traceback.print_exc()
                 retry += 1
             
             if data:
                 break
+                
+            time.sleep(0.1)
         
         if data is None or 'address' not in data:
             return None
@@ -62,7 +69,7 @@ class GeoClient:
         if data['address']['geosupportReturnCode'][0:1] != '0' or int(data['address']['geosupportReturnCode']) > 1:
             return None
         
-        return data['address']
+        return data[type]
                 
     def __infer_borough(self, string):
         '''
@@ -115,7 +122,7 @@ class GeoClient:
             'borough':borough
         }
         
-        results = self.__query(params)
+        results = self.__query('address', params)
         return results
 
 if __name__ == '__main__':        
