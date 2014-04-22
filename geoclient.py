@@ -124,6 +124,20 @@ class GeoClient:
         
         results = self.__query('address', params)
         return results
+        
+    def query(self, type, params, outputs = {}):
+        results = self.__query(type, params)
+        if not results:
+            return None
+        else:
+            if len(outputs) == 0:
+                return results
+            else:
+                res = {}
+                for k in outputs:
+                    if k in results.keys():
+                        res[k] = results[k]
+                return res
 
 if __name__ == '__main__':        
     geo = GeoClient()
