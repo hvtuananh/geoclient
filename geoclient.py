@@ -62,11 +62,11 @@ class GeoClient:
                 
             time.sleep(0.1)
         
-        if data is None or 'address' not in data:
+        if data is None or type not in data:
             return None
-        if 'geosupportReturnCode' not in data['address']:
+        if 'geosupportReturnCode' not in data[type]:
             return None
-        if data['address']['geosupportReturnCode'][0:1] != '0' or int(data['address']['geosupportReturnCode']) > 1:
+        if data[type]['geosupportReturnCode'][0:1] != '0' or int(data[type]['geosupportReturnCode']) > 1:
             return None
         
         return data[type]
